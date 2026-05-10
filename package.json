@@ -1,13 +1,15 @@
 {
-  "name": "react-native-device-security",
+  "name": "react-native-device-defense",
   "version": "1.0.0",
   "description": "Multi-layer device security detection for React Native (root, hook, debugger, emulator detection)",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "types": "lib/typescript/index.d.ts",
   "react-native": "src/index.ts",
   "source": "src/index.ts",
   "files": [
     "src",
+    "lib",
     "android",
     "ios",
     "react-native-device-security.podspec",
@@ -26,14 +28,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/react-native-device-security.git"
+    "url": "git+https://github.com/BuiHung1612/react-native-device-security.git"
   },
-  "author": "OSP <dev@osp.vn>",
+  "author": "Hung Bui <https://github.com/BuiHung1612>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/your-org/react-native-device-security/issues"
+    "url": "https://github.com/BuiHung1612/react-native-device-security/issues"
   },
-  "homepage": "https://github.com/your-org/react-native-device-security#readme",
+  "homepage": "https://github.com/BuiHung1612/react-native-device-security#readme",
   "publishConfig": {
     "access": "public"
   },

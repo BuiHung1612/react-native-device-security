@@ -1,4 +1,4 @@
-package vn.osp.security
+package com.devicedefense
 
 /**
  * Native (JNI) security checks

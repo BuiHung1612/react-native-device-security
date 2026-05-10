@@ -1,4 +1,4 @@
-package vn.osp.security
+package com.devicedefense
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

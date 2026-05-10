@@ -1,4 +1,4 @@
-package vn.osp.security
+package com.devicedefense
 
 import android.util.Log
 import com.facebook.react.bridge.*

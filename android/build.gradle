@@ -30,7 +30,7 @@ android {
   ndkVersion rootProject.ext.ndkVersion
   compileSdkVersion safeExtGet('compileSdkVersion', 34)
 
-  namespace "vn.osp.security"
+  namespace "com.devicedefense"
 
   defaultConfig {
     minSdkVersion safeExtGet('minSdkVersion', 21)

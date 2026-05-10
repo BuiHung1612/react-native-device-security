@@ -1,4 +1,4 @@
-# react-native-device-security
+# react-native-device-defense
 
 > Multi-layer device security detection for React Native - Root detection, Anti-hook, Anti-debug, Emulator detection
 
@@ -15,9 +15,9 @@
 ## Installation
 
 ```bash
-npm install react-native-device-security
+npm install react-native-device-defense
 # or
-yarn add react-native-device-security
+yarn add react-native-device-defense
 ```
 
 ## Android Setup
@@ -25,22 +25,22 @@ yarn add react-native-device-security
 1. Add to `android/settings.gradle`:
 
 ```gradle
-include ':react-native-device-security'
-project(':react-native-device-security').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-device-security/android')
+include ':react-native-device-defense'
+project(':react-native-device-defense').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-device-defense/android')
 ```
 
 2. Add to `android/app/build.gradle`:
 
 ```gradle
 dependencies {
-    implementation project(':react-native-device-security')
+    implementation project(':react-native-device-defense')
 }
 ```
 
 3. Add to `MainApplication.java`:
 
 ```java
-import vn.osp.security.DeviceSecurityPackage;
+import com.devicedefense.DeviceSecurityPackage;
 
 @Override
 protected List<ReactPackage> getPackages() {
@@ -56,7 +56,7 @@ protected List<ReactPackage> getPackages() {
 ### Basic Usage
 
 ```typescript
-import DeviceSecurity from 'react-native-device-security';
+import DeviceSecurity from 'react-native-device-defense';
 
 // Check if device is secure
 const isSecure = await DeviceSecurity.isDeviceSecure();
@@ -74,7 +74,7 @@ if (!isSecure) {
 ### Advanced Usage with Hook
 
 ```typescript
-import { useDeviceSecurity } from 'react-native-device-security';
+import { useDeviceSecurity } from 'react-native-device-defense';
 
 function App() {
   const { isSecure, securityStatus, isLoading } = useDeviceSecurity({
@@ -121,7 +121,7 @@ console.log({
 ### Block on Security Threat (Recommended for Production)
 
 ```typescript
-import DeviceSecurity from 'react-native-device-security';
+import DeviceSecurity from 'react-native-device-defense';
 
 // In your app entry point
 DeviceSecurity.blockOnSecurityThreat({
@@ -188,9 +188,9 @@ Add to `android/app/proguard-rules.pro`:
 
 ```proguard
 # Device Security Library
--keep class vn.osp.security.** { *; }
--keepclassmembers class vn.osp.security.** { *; }
--dontwarn vn.osp.security.**
+-keep class com.devicedefense.** { *; }
+-keepclassmembers class com.devicedefense.** { *; }
+-dontwarn com.devicedefense.**
 ```
 
 ## Security Techniques
@@ -223,14 +223,10 @@ Add to `android/app/proguard-rules.pro`:
 
 MIT
 
-## Author
-
-OSP <dev@osp.vn>
-
 ## Contributing
 
 Pull requests are welcome!
 
 ## Support
 
-For issues and questions, please open a GitHub issue.
+For issues and questions, please open a GitHub issue at https://github.com/BuiHung1612/react-native-device-security/issues

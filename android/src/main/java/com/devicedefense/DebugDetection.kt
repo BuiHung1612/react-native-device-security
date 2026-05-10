@@ -1,4 +1,4 @@
-package vn.osp.security
+package com.devicedefense
 
 import android.content.Context
 import android.os.Debug
