@@ -1,0 +1,40 @@
+# Build
+lib/
+dist/
+build/
+*.log
+
+# Examples
+example/
+examples/
+
+# Tests
+**/__tests__/
+**/__fixtures__/
+**/__mocks__/
+
+# Docs (exclude from package)
+docs/
+*.md
+!README.md
+
+# Config files
+tsconfig.json
+.eslintrc.*
+.prettierrc.*
+.editorconfig
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

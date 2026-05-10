@@ -1,0 +1,41 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build
+lib/
+dist/
+build/
+*.log
+
+# Android
+android/build/
+android/.gradle/
+android/local.properties
+android/*.iml
+android/app/release/
+android/app/debug/
+
+# iOS
+ios/Pods/
+ios/build/
+*.xcworkspace
+xcuserdata/
+
+# Temp
+.tmp/
+temp/
+*.tmp

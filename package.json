@@ -1,0 +1,70 @@
+{
+  "name": "react-native-device-security",
+  "version": "1.0.0",
+  "description": "Multi-layer device security detection for React Native (root, hook, debugger, emulator detection)",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "android",
+    "ios",
+    "react-native-device-security.podspec",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "keywords": [
+    "react-native",
+    "security",
+    "root-detection",
+    "anti-hook",
+    "anti-debug",
+    "device-security",
+    "android-security"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/react-native-device-security.git"
+  },
+  "author": "OSP <dev@osp.vn>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-org/react-native-device-security/issues"
+  },
+  "homepage": "https://github.com/your-org/react-native-device-security#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"**/*.{js,ts,tsx}\"",
+    "prepare": "bob build"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-native": "^0.72.0",
+    "react-native-builder-bob": "^0.20.0",
+    "typescript": "^5.0.0"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  }
+}
