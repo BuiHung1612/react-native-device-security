@@ -22,6 +22,17 @@ yarn add react-native-device-defense
 
 ## Android Setup
 
+### React Native 0.60+ (Autolinking)
+
+No manual setup required! Just install and rebuild:
+
+```bash
+yarn add react-native-device-defense
+npx react-native run-android
+```
+
+### React Native < 0.60 (Manual Linking)
+
 1. Add to `android/settings.gradle`:
 
 ```gradle
