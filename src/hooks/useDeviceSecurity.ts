@@ -2,7 +2,7 @@
  * React hook for device security
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import deviceSecurity from '../api';
 import type {
@@ -14,12 +14,7 @@ import type {
 export function useDeviceSecurity(
   options: UseDeviceSecurityOptions = {},
 ): UseDeviceSecurityReturn {
-  const {
-    onSecurityThreat,
-    blockOnThreat = false,
-    blockOptions,
-    checkInterval = 0,
-  } = options;
+  const { checkInterval = 0 } = options;
 
   const [isSecure, setIsSecure] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +22,12 @@ export function useDeviceSecurity(
     null,
   );
   const [error, setError] = useState<Error | null>(null);
+
+  // Use refs for options to avoid infinite loops when inline objects/functions are passed
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const checkSecurity = useCallback(async () => {
     if (Platform.OS !== 'android') {
@@ -45,14 +46,16 @@ export function useDeviceSecurity(
 
       // Handle security threats
       if (!status.isSecure) {
+        const currentOptions = optionsRef.current;
+        
         // Call callback for each threat
         for (const threat of status.threats) {
-          onSecurityThreat?.(threat, status);
+          currentOptions.onSecurityThreat?.(threat, status);
         }
 
         // Block if requested
-        if (blockOnThreat) {
-          deviceSecurity.blockOnSecurityThreat(blockOptions);
+        if (currentOptions.blockOnThreat) {
+          deviceSecurity.blockOnSecurityThreat(currentOptions.blockOptions);
         }
       }
     } catch (err) {
@@ -63,7 +66,7 @@ export function useDeviceSecurity(
     } finally {
       setIsLoading(false);
     }
-  }, [onSecurityThreat, blockOnThreat, blockOptions]);
+  }, []);
 
   const recheck = useCallback(async () => {
     await checkSecurity();

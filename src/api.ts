@@ -9,6 +9,7 @@ import type {
   BlockOnSecurityThreatOptions,
   SecurityStatus,
   SecurityThreat,
+  SSLSecurityStatus,
 } from './types';
 
 /**
@@ -52,6 +53,12 @@ class DeviceSecurity {
         hasMagisk: false,
         isDebuggable: false,
         isEmulator: false,
+        hasSSLValidationBypass: false,
+        hasSSLPinningBypass: false,
+        hasProxyConfiguration: false,
+        hasModifiedSSLLibraries: false,
+        hasCertificateTampering: false,
+        hasSSLSecurityIssue: false,
       };
     }
 
@@ -61,6 +68,38 @@ class DeviceSecurity {
     } catch (error) {
       console.error('DeviceSecurity: Error getting security status', error);
       return this.getDefaultSecurityStatus();
+    }
+  }
+
+  /**
+   * Get detailed SSL security status
+   */
+  async getSSLSecurityStatus(): Promise<SSLSecurityStatus> {
+    if (Platform.OS !== 'android') {
+      // iOS: no-op for now, return secure status
+      return {
+        hasSSLValidationBypass: false,
+        hasSSLPinningBypass: false,
+        hasProxyConfiguration: false,
+        hasModifiedSSLLibraries: false,
+        hasCertificateTampering: false,
+        hasSSLSecurityIssue: false,
+      };
+    }
+
+    try {
+      const statusJson = await NativeDeviceSecurity.getSSLSecurityStatus();
+      return JSON.parse(statusJson) as SSLSecurityStatus;
+    } catch (error) {
+      console.error('DeviceSecurity: Error getting SSL security status', error);
+      return {
+        hasSSLValidationBypass: false,
+        hasSSLPinningBypass: false,
+        hasProxyConfiguration: false,
+        hasModifiedSSLLibraries: false,
+        hasCertificateTampering: false,
+        hasSSLSecurityIssue: false,
+      };
     }
   }
 
@@ -160,6 +199,104 @@ class DeviceSecurity {
     }
   }
 
+  // ===== SSL Security Methods =====
+
+  /**
+   * Check if SSL validation has been bypassed
+   */
+  hasSSLValidationBypass(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasSSLValidationBypass();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking SSL validation bypass', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if SSL pinning bypass tools are present
+   */
+  hasSSLPinningBypass(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasSSLPinningBypass();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking SSL pinning bypass', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if proxy is configured (potential MITM)
+   */
+  hasProxyConfiguration(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasProxyConfiguration();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking proxy configuration', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if SSL libraries have been modified
+   */
+  hasModifiedSSLLibraries(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasModifiedSSLLibraries();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking modified SSL libraries', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if certificates have been tampered with
+   */
+  hasCertificateTampering(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasCertificateTampering();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking certificate tampering', error);
+      return false;
+    }
+  }
+
+  /**
+   * Comprehensive SSL security check
+   */
+  hasSSLSecurityIssue(): boolean {
+    if (Platform.OS !== 'android') {
+      return false;
+    }
+
+    try {
+      return NativeDeviceSecurity.hasSSLSecurityIssue();
+    } catch (error) {
+      console.error('DeviceSecurity: Error checking SSL security', error);
+      return false;
+    }
+  }
+
   /**
    * Block app when security threat detected
    * This will show an alert and potentially exit the app
@@ -215,6 +352,12 @@ class DeviceSecurity {
       hasMagisk: false,
       isDebuggable: false,
       isEmulator: false,
+      hasSSLValidationBypass: false,
+      hasSSLPinningBypass: false,
+      hasProxyConfiguration: false,
+      hasModifiedSSLLibraries: false,
+      hasCertificateTampering: false,
+      hasSSLSecurityIssue: false,
     };
   }
 }

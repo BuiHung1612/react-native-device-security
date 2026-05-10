@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <android/log.h>
 #include <stdexcept>
+#include <openssl/opensslv.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
 #define LOG_TAG "DeviceSecurityNative"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -238,6 +242,234 @@ static bool checkFridaInMaps() {
 }
 
 /**
+ * Check for SSL validation bypass in system properties
+ */
+static bool checkSSLValidationBypass() {
+    const std::vector<std::string> propFiles = {
+        "/system/build.prop",
+        "/vendor/build.prop",
+        "/default.prop"
+    };
+
+    for (const auto& propFile : propFiles) {
+        if (!fileExists(propFile)) continue;
+
+        std::ifstream file(propFile);
+        std::string line;
+
+        while (std::getline(file, line)) {
+            // Check for SSL validation bypass indicators
+            if (line.find("ssl.untrusted=0") != std::string::npos) {
+                LOGD("Found SSL validation bypass in %s", propFile.c_str());
+                return true;
+            }
+            if (line.find("ro.debuggable") != std::string::npos &&
+                line.find("1") != std::string::npos) {
+                // Debuggable builds may have SSL validation bypassed
+                LOGD("Device is debuggable, SSL may be bypassed");
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Check for common SSL pinning bypass tools and frameworks
+ */
+static bool checkSSLPinningBypass() {
+    // Check for known SSL pinning bypass tools in /proc/self/maps
+    std::ifstream mapsFile("/proc/self/maps");
+    std::string line;
+
+    const std::vector<std::string> bypassLibraries = {
+        "libssl-bypass",
+        " Frida",
+        "xposed",
+        "substrate",
+        "magisk",
+        "r0puse",
+        "ssl-pin bypass",
+        "trustmekit"
+    };
+
+    while (std::getline(mapsFile, line)) {
+        std::string lowerLine = line;
+        std::transform(lowerLine.begin(), lowerLine.end(), lowerLine.begin(), ::tolower);
+
+        for (const auto& lib : bypassLibraries) {
+            if (lowerLine.find(lib) != std::string::npos) {
+                LOGD("Found SSL pinning bypass tool: %s", lib.c_str());
+                return true;
+            }
+        }
+    }
+
+    // Check for common SSL bypass apps
+    const std::vector<std::string> bypassApps = {
+        "/data/data/de.robv.android.xposed.installer",
+        "/data/data/com.sensei.withakemon",
+        "/data/data/com.solid.pinkyscan",
+        "/data/data/jp.co.cyberagent.android.deviceauthorization"
+    };
+
+    for (const auto& app : bypassApps) {
+        if (directoryExists(app)) {
+            LOGD("Found SSL bypass app: %s", app.c_str());
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Check for proxy configuration that could intercept SSL traffic
+ */
+static bool checkProxyConfiguration() {
+    // Check for HTTP proxy in system properties
+    const std::vector<std::string> propFiles = {
+        "/system/build.prop",
+        "/vendor/build.prop"
+    };
+
+    for (const auto& propFile : propFiles) {
+        if (!fileExists(propFile)) continue;
+
+        std::ifstream file(propFile);
+        std::string line;
+
+        while (std::getline(file, line)) {
+            if (line.find("http.proxy") != std::string::npos ||
+                line.find("https.proxy") != std::string::npos) {
+                LOGD("Found proxy configuration in %s", propFile.c_str());
+                return true;
+            }
+        }
+    }
+
+    // Check for proxy environment variables
+    if (getenv("http_proxy") != nullptr || getenv("https_proxy") != nullptr) {
+        LOGD("Found proxy environment variables");
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Check for modified SSL libraries
+ */
+static bool checkModifiedSSLLibraries() {
+    // Check if SSL libraries are from unexpected locations
+    std::ifstream mapsFile("/proc/self/maps");
+    std::string line;
+
+    const std::vector<std::string> trustedPaths = {
+        "/system/lib/libssl",
+        "/system/lib64/libssl",
+        "/apex/com.android.conscrypt/lib",
+        "/data/app/", // App's own lib path
+        "/com.android.conscrypt"
+    };
+
+    while (std::getline(mapsFile, line)) {
+        if (line.find("libssl") != std::string::npos ||
+            line.find("libcrypto") != std::string::npos) {
+
+            // Check if library is from trusted path
+            bool fromTrustedPath = false;
+            for (const auto& trusted : trustedPaths) {
+                if (line.find(trusted) != std::string::npos) {
+                    fromTrustedPath = true;
+                    break;
+                }
+            }
+
+            if (!fromTrustedPath && line.find("r-xp") != std::string::npos) {
+                // Library is executable but not from trusted path
+                LOGD("Found potentially modified SSL library: %s", line.c_str());
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Check for certificate tampering
+ */
+static bool checkCertificateTampering() {
+    // Check for user-installed CA certificates
+    const std::vector<std::string> certPaths = {
+        "/data/misc/keychain/cacerts-added",
+        "/system/etc/security/cacerts"
+    };
+
+    for (const auto& certPath : certPaths) {
+        if (directoryExists(certPath)) {
+            DIR* dir = opendir(certPath.c_str());
+            if (dir != nullptr) {
+                struct dirent* entry;
+                int certCount = 0;
+
+                while ((entry = readdir(dir)) != nullptr) {
+                    if (entry->d_type == DT_REG) {
+                        certCount++;
+                    }
+                }
+
+                closedir(dir);
+
+                // Too many user certificates might indicate tampering
+                if (certCount > 100) {
+                    LOGD("Suspicious number of certificates: %d", certCount);
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Comprehensive SSL security check
+ */
+static bool checkSSLSecurity() {
+    bool hasIssue = false;
+
+    if (checkSSLValidationBypass()) {
+        LOGD("SSL validation bypass detected");
+        hasIssue = true;
+    }
+
+    if (checkSSLPinningBypass()) {
+        LOGD("SSL pinning bypass detected");
+        hasIssue = true;
+    }
+
+    if (checkProxyConfiguration()) {
+        LOGD("Proxy configuration detected");
+        hasIssue = true;
+    }
+
+    if (checkModifiedSSLLibraries()) {
+        LOGD("Modified SSL libraries detected");
+        hasIssue = true;
+    }
+
+    if (checkCertificateTampering()) {
+        LOGD("Certificate tampering detected");
+        hasIssue = true;
+    }
+
+    return hasIssue;
+}
+
+/**
  * Main root detection function
  */
 static bool performRootDetection() {
@@ -269,45 +501,87 @@ static bool performRootDetection() {
     return false;
 }
 
+// Updated JNI functions with new package name
 extern "C" JNIEXPORT jboolean JNICALL
-Java_vn_osp_security_NativeSecurityCheck_isRooted(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_isRooted(JNIEnv* env, jobject /* this */) {
     return performRootDetection() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_vn_osp_security_NativeSecurityCheck_hasDangerousBinaries(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_hasDangerousBinaries(JNIEnv* env, jobject /* this */) {
     return checkDangerousBinaries() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_vn_osp_security_NativeSecurityCheck_hasSuspiciousSystemProperties(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_hasSuspiciousSystemProperties(JNIEnv* env, jobject /* this */) {
     return checkSystemProperties() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_vn_osp_security_NativeSecurityCheck_hasHookFramework(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_hasHookFramework(JNIEnv* env, jobject /* this */) {
     return checkFridaInMaps() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_vn_osp_security_NativeSecurityCheck_isDebuggerAttached(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_isDebuggerAttached(JNIEnv* env, jobject /* this */) {
     return checkTracerPid() ? JNI_TRUE : JNI_FALSE;
 }
 
+// New SSL security functions
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasSSLValidationBypass(JNIEnv* env, jobject /* this */) {
+    return checkSSLValidationBypass() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasSSLPinningBypass(JNIEnv* env, jobject /* this */) {
+    return checkSSLPinningBypass() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasProxyConfiguration(JNIEnv* env, jobject /* this */) {
+    return checkProxyConfiguration() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasModifiedSSLLibraries(JNIEnv* env, jobject /* this */) {
+    return checkModifiedSSLLibraries() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasCertificateTampering(JNIEnv* env, jobject /* this */) {
+    return checkCertificateTampering() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_devicedefense_NativeSecurityCheck_hasSSLSecurityIssue(JNIEnv* env, jobject /* this */) {
+    return checkSSLSecurity() ? JNI_TRUE : JNI_FALSE;
+}
+
 extern "C" JNIEXPORT jstring JNICALL
-Java_vn_osp_security_NativeSecurityCheck_getSecurityStatus(JNIEnv* env, jobject /* this */) {
+Java_com_devicedefense_NativeSecurityCheck_getSecurityStatus(JNIEnv* env, jobject /* this */) {
     bool isRooted = performRootDetection();
     bool hasDangerousBins = checkDangerousBinaries();
     bool hasSuspiciousProps = checkSystemProperties();
     bool hasHook = checkFridaInMaps();
     bool hasDebugger = checkTracerPid();
+    bool hasSSLIssue = checkSSLSecurity();
+    bool hasSSLBypass = checkSSLPinningBypass();
+    bool hasProxy = checkProxyConfiguration();
+    bool hasModifiedSSL = checkModifiedSSLLibraries();
+    bool hasCertTampering = checkCertificateTampering();
 
     std::string json = "{";
     json += "\"isRooted\":" + std::string(isRooted ? "true" : "false") + ",";
     json += "\"hasDangerousBins\":" + std::string(hasDangerousBins ? "true" : "false") + ",";
     json += "\"hasSuspiciousProps\":" + std::string(hasSuspiciousProps ? "true" : "false") + ",";
     json += "\"hasHookFramework\":" + std::string(hasHook ? "true" : "false") + ",";
-    json += "\"isDebuggerAttached\":" + std::string(hasDebugger ? "true" : "false");
+    json += "\"isDebuggerAttached\":" + std::string(hasDebugger ? "true" : "false") + ",";
+    json += "\"hasSSLSecurityIssue\":" + std::string(hasSSLIssue ? "true" : "false") + ",";
+    json += "\"hasSSLValidationBypass\":" + std::string(hasSSLBypass ? "true" : "false") + ",";
+    json += "\"hasProxyConfiguration\":" + std::string(hasProxy ? "true" : "false") + ",";
+    json += "\"hasModifiedSSLLibraries\":" + std::string(hasModifiedSSL ? "true" : "false") + ",";
+    json += "\"hasCertificateTampering\":" + std::string(hasCertTampering ? "true" : "false");
     json += "}";
 
     return env->NewStringUTF(json.c_str());

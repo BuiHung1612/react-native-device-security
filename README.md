@@ -9,6 +9,7 @@
 - 🎣 **Frida/Xposed Detection** - Detect common hooking frameworks
 - 🐛 **Anti-Debug** - Detect debugger attachment
 - 📱 **Emulator Detection** - Detect Android emulators
+- 🔐 **SSL Pinning Detection** - Native C++ SSL security checks to prevent MITM attacks
 - 🛡️ **App Integrity Check** - Verify app signature and tampering
 - 🔐 **Block on Security Threat** - Automatically block app when security issues detected
 
@@ -146,6 +147,49 @@ DeviceSecurity.blockOnSecurityThreat({
 });
 ```
 
+### SSL Security Check
+
+Prevent MITM (Man-in-the-Middle) attacks with native SSL security checks:
+
+```typescript
+import DeviceSecurity from 'react-native-device-defense';
+
+// Quick SSL security check
+const hasSSLIssue = DeviceSecurity.hasSSLSecurityIssue();
+
+if (hasSSLIssue) {
+  console.log('SSL security issue detected!');
+  // Block sensitive operations or show warning
+}
+
+// Detailed SSL security status
+const sslStatus = await DeviceSecurity.getSSLSecurityStatus();
+
+console.log({
+  hasSSLValidationBypass: sslStatus.hasSSLValidationBypass,
+  hasSSLPinningBypass: sslStatus.hasSSLPinningBypass,
+  hasProxyConfiguration: sslStatus.hasProxyConfiguration, // Potential MITM
+  hasModifiedSSLLibraries: sslStatus.hasModifiedSSLLibraries,
+  hasCertificateTampering: sslStatus.hasCertificateTampering,
+});
+
+// Check for specific SSL threats
+if (DeviceSecurity.hasSSLPinningBypass()) {
+  // SSL pinning bypass tools detected (Frida, Xposed, etc.)
+  Alert.alert('Security Warning', 'SSL pinning bypass detected. Your connection may not be secure.');
+}
+
+if (DeviceSecurity.hasProxyConfiguration()) {
+  // Proxy configured - potential MITM attack
+  console.warn('Proxy configuration detected - possible MITM');
+}
+
+if (DeviceSecurity.hasCertificateTampering()) {
+  // Excessive user certificates detected
+  Alert.alert('Security Warning', 'Device certificates have been modified.');
+}
+```
+
 ## API Reference
 
 ### Methods
@@ -154,6 +198,7 @@ DeviceSecurity.blockOnSecurityThreat({
 |--------|---------|-------------|
 | `isDeviceSecure()` | `Promise<boolean>` | Check if device is secure (no threats) |
 | `getSecurityStatus()` | `Promise<SecurityStatus>` | Get detailed security status |
+| `getSSLSecurityStatus()` | `Promise<SSLSecurityStatus>` | Get detailed SSL security status |
 | `blockOnSecurityThreat(options)` | `void` | Block app when security threat detected |
 | `isRooted()` | `boolean` | Check if device is rooted (synchronous) |
 | `hasFrida()` | `boolean` | Check if Frida is present |
@@ -161,6 +206,12 @@ DeviceSecurity.blockOnSecurityThreat({
 | `hasMagisk()` | `boolean` | Check if Magisk is present |
 | `isDebuggable()` | `boolean` | Check if app is debuggable |
 | `isEmulator()` | `boolean` | Check if running on emulator |
+| `hasSSLValidationBypass()` | `boolean` | Check if SSL validation is bypassed |
+| `hasSSLPinningBypass()` | `boolean` | Check for SSL pinning bypass tools |
+| `hasProxyConfiguration()` | `boolean` | Check if proxy is configured (MITM risk) |
+| `hasModifiedSSLLibraries()` | `boolean` | Check if SSL libraries are modified |
+| `hasCertificateTampering()` | `boolean` | Check for certificate tampering |
+| `hasSSLSecurityIssue()` | `boolean` | Comprehensive SSL security check |
 
 ### Types
 
@@ -179,6 +230,22 @@ interface SecurityStatus {
   hasMagisk: boolean;
   isDebuggable: boolean;
   isEmulator: boolean;
+  // SSL security fields
+  hasSSLValidationBypass: boolean;
+  hasSSLPinningBypass: boolean;
+  hasProxyConfiguration: boolean;
+  hasModifiedSSLLibraries: boolean;
+  hasCertificateTampering: boolean;
+  hasSSLSecurityIssue: boolean;
+}
+
+interface SSLSecurityStatus {
+  hasSSLValidationBypass: boolean;
+  hasSSLPinningBypass: boolean;
+  hasProxyConfiguration: boolean;
+  hasModifiedSSLLibraries: boolean;
+  hasCertificateTampering: boolean;
+  hasSSLSecurityIssue: boolean;
 }
 
 type SecurityThreat =
@@ -188,7 +255,12 @@ type SecurityThreat =
   | 'magisk_detected'
   | 'debugger_detected'
   | 'emulator_detected'
-  | 'system_props_modified';
+  | 'system_props_modified'
+  | 'ssl_validation_bypass'
+  | 'ssl_pinning_bypass'
+  | 'proxy_configuration'
+  | 'modified_ssl_libraries'
+  | 'certificate_tampering';
 ```
 
 ## Configuration
@@ -229,6 +301,14 @@ Add to `android/app/proguard-rules.pro`:
 - Known emulator properties
 - Generic device features
 - Genymotion, Nox, BlueStacks detection
+
+### SSL Security Detection (Native C++)
+- SSL validation bypass detection
+- SSL pinning bypass tools detection (Frida, Xposed, Substrate)
+- Proxy configuration detection (MITM risk)
+- Modified SSL libraries detection
+- Certificate tampering detection
+- User-installed CA certificate monitoring
 
 ## License
 

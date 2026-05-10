@@ -19,8 +19,7 @@ class EmulatorDetection(private val context: Context) {
                 checkEmulatorBuildProps() ||
                 checkEmulatorFiles() ||
                 checkEmulatorFeatures() ||
-                checkNetworkInterfaces() ||
-                checkCamera()
+                checkNetworkInterfaces()
     }
 
     /**
@@ -117,25 +116,37 @@ class EmulatorDetection(private val context: Context) {
      * Check for emulator features
      */
     private fun checkEmulatorFeatures(): Boolean {
-        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-            ?: return false
+        try {
+            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+                ?: return false
 
-        // Check for invalid network operator
-        val networkOperator = telephonyManager.networkOperator
-        if (networkOperator == null || networkOperator == "000000000000000") {
-            return true
-        }
+            // Check for invalid network operator (only check for known emulator fake values, not null/empty which happens on tablets)
+            val networkOperator = telephonyManager.networkOperator
+            if (networkOperator == "000000000000000") {
+                return true
+            }
 
-        // Check for invalid subscriber ID
-        val subscriberId = telephonyManager.subscriberId
-        if (subscriberId == null || subscriberId == "000000000000000") {
-            return true
-        }
+            // Check for invalid subscriber ID (requires READ_PHONE_STATE, might throw SecurityException)
+            try {
+                val subscriberId = telephonyManager.subscriberId
+                if (subscriberId == "000000000000000") {
+                    return true
+                }
+            } catch (e: SecurityException) {
+                // Ignore if permission denied
+            }
 
-        // Check for invalid IMEI/MEID
-        val deviceId = telephonyManager.deviceId
-        if (deviceId == null || deviceId == "000000000000000" || deviceId == "0") {
-            return true
+            // Check for invalid IMEI/MEID (requires READ_PHONE_STATE)
+            try {
+                val deviceId = telephonyManager.deviceId
+                if (deviceId == "000000000000000" || deviceId == "0") {
+                    return true
+                }
+            } catch (e: SecurityException) {
+                // Ignore if permission denied
+            }
+        } catch (e: Exception) {
+            // Ignore other telephony errors
         }
 
         return false

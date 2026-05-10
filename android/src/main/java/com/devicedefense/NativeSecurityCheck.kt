@@ -46,8 +46,50 @@ object NativeSecurityCheck {
     external fun isDebuggerAttached(): Boolean
 
     /**
+     * Native check for SSL validation bypass
+     * Checks if SSL certificate validation has been bypassed
+     * @return true if SSL validation is bypassed
+     */
+    external fun hasSSLValidationBypass(): Boolean
+
+    /**
+     * Native check for SSL pinning bypass tools
+     * Checks for common SSL pinning bypass frameworks and tools
+     * @return true if SSL pinning bypass detected
+     */
+    external fun hasSSLPinningBypass(): Boolean
+
+    /**
+     * Native check for proxy configuration
+     * Checks if HTTP/HTTPS proxy is configured (potential MITM)
+     * @return true if proxy is configured
+     */
+    external fun hasProxyConfiguration(): Boolean
+
+    /**
+     * Native check for modified SSL libraries
+     * Checks if SSL libraries are from unexpected locations
+     * @return true if modified SSL libraries detected
+     */
+    external fun hasModifiedSSLLibraries(): Boolean
+
+    /**
+     * Native check for certificate tampering
+     * Checks for excessive user-installed CA certificates
+     * @return true if certificate tampering detected
+     */
+    external fun hasCertificateTampering(): Boolean
+
+    /**
+     * Native comprehensive SSL security check
+     * Checks all SSL security aspects
+     * @return true if any SSL security issue detected
+     */
+    external fun hasSSLSecurityIssue(): Boolean
+
+    /**
      * Get native security status as JSON string
-     * @return JSON string with security status
+     * @return JSON string with security status including SSL checks
      */
     external fun getSecurityStatus(): String
 

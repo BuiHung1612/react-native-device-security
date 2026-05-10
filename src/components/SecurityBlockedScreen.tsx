@@ -38,6 +38,11 @@ const THREAT_TITLES: Record<SecurityThreat, string> = {
   magisk_detected: 'Phát hiện Magisk',
   debugger_detected: 'Phát hiện Debugger',
   emulator_detected: 'Phát hiện Bộ giả lập',
+  ssl_validation_bypass: 'SSL Validation bị bypass',
+  ssl_pinning_bypass: 'SSL Pinning bị bypass',
+  proxy_configuration: 'Phát hiện Proxy (MITM)',
+  modified_ssl_libraries: 'SSL Library đã sửa đổi',
+  certificate_tampering: 'Certificate bị can thiệp',
 };
 
 const THREAT_DESCRIPTIONS: Record<SecurityThreat, string> = {
@@ -52,6 +57,11 @@ const THREAT_DESCRIPTIONS: Record<SecurityThreat, string> = {
   magisk_detected: 'Phát hiện Magisk - công cụ root ẩn danh.',
   debugger_detected: 'Phát hiện debugger đang gắn vào ứng dụng.',
   emulator_detected: 'Ứng dụng đang chạy trên bộ giả lập, không an toàn cho môi trường production.',
+  ssl_validation_bypass: 'SSL certificate validation đã bị bypass, kết nối có thể không an toàn.',
+  ssl_pinning_bypass: 'Phát hiện công cụ SSL pinning bypass (Frida, Xposed...) - tấn công MITM có thể xảy ra.',
+  proxy_configuration: 'Phát hiện cấu hình proxy - có thể là dấu hiệu của tấn công MITM.',
+  modified_ssl_libraries: 'SSL libraries đã bị sửa đổi - có thể dẫn đến kết nối không an toàn.',
+  certificate_tampering: 'Phát hiện certificate đã bị can thiệp - kết nối có thể bị theo dõi.',
 };
 
 /**

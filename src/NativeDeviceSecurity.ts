@@ -17,6 +17,15 @@ export interface Spec extends TurboModule {
   // Emulator detection
   isEmulator(): boolean;
 
+  // SSL security methods
+  hasSSLValidationBypass(): boolean;
+  hasSSLPinningBypass(): boolean;
+  hasProxyConfiguration(): boolean;
+  hasModifiedSSLLibraries(): boolean;
+  hasCertificateTampering(): boolean;
+  hasSSLSecurityIssue(): boolean;
+  getSSLSecurityStatus(): Promise<string>;
+
   // Comprehensive security check
   getSecurityStatus(): Promise<string>;
   isDeviceSecure(): Promise<boolean>;

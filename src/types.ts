@@ -12,7 +12,30 @@ export type SecurityThreat =
   | 'xposed_detected'
   | 'magisk_detected'
   | 'debugger_detected'
-  | 'emulator_detected';
+  | 'emulator_detected'
+  | 'ssl_validation_bypass'
+  | 'ssl_pinning_bypass'
+  | 'proxy_configuration'
+  | 'modified_ssl_libraries'
+  | 'certificate_tampering';
+
+/**
+ * SSL Security Status
+ */
+export interface SSLSecurityStatus {
+  /** SSL validation has been bypassed */
+  hasSSLValidationBypass: boolean;
+  /** SSL pinning bypass tools detected */
+  hasSSLPinningBypass: boolean;
+  /** Proxy configuration detected (potential MITM) */
+  hasProxyConfiguration: boolean;
+  /** SSL libraries have been modified */
+  hasModifiedSSLLibraries: boolean;
+  /** Certificate tampering detected */
+  hasCertificateTampering: boolean;
+  /** Any SSL security issue detected */
+  hasSSLSecurityIssue: boolean;
+}
 
 /**
  * Detailed security status
@@ -44,6 +67,18 @@ export interface SecurityStatus {
   isDebuggable: boolean;
   /** Running on emulator */
   isEmulator: boolean;
+  /** SSL validation has been bypassed */
+  hasSSLValidationBypass: boolean;
+  /** SSL pinning bypass tools detected */
+  hasSSLPinningBypass: boolean;
+  /** Proxy configuration detected */
+  hasProxyConfiguration: boolean;
+  /** SSL libraries have been modified */
+  hasModifiedSSLLibraries: boolean;
+  /** Certificate tampering detected */
+  hasCertificateTampering: boolean;
+  /** Any SSL security issue detected */
+  hasSSLSecurityIssue: boolean;
   /** Additional details about detection */
   details?: Record<string, boolean | string | number>;
 }
