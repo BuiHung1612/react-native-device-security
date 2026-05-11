@@ -115,6 +115,7 @@ class EmulatorDetection(private val context: Context) {
     /**
      * Check for emulator features
      */
+    @Suppress("DEPRECATION", "MissingPermission")
     private fun checkEmulatorFeatures(): Boolean {
         try {
             val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager

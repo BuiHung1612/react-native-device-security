@@ -370,7 +370,7 @@ class DeviceSecurityModule(reactContext: ReactApplicationContext) :
 
                 // Show alert if requested
                 if (showAlert) {
-                    val activity = getCurrentActivity()
+                    val activity = reactApplicationContext.currentActivity
                     activity?.runOnUiThread {
                         android.app.AlertDialog.Builder(activity)
                             .setCancelable(false)
@@ -384,7 +384,7 @@ class DeviceSecurityModule(reactContext: ReactApplicationContext) :
                     }
                 } else {
                     // Exit without alert
-                    getCurrentActivity()?.finishAffinity()
+                    reactApplicationContext.currentActivity?.finishAffinity()
                     System.exit(0)
                 }
             } else {
