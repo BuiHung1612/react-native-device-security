@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="vn.osp.security">
+<manifest>
     <!-- No permissions needed for security checks -->
 </manifest>
