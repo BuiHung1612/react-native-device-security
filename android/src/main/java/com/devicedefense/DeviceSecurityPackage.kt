@@ -19,40 +19,4 @@ class DeviceSecurityPackage : ReactPackage {
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
         return emptyList()
     }
-
-    override fun getModuleInfoProvider(): ReactModuleInfoProvider {
-        return ReactModuleInfoProvider {
-            val moduleInfo: MutableMap<String, ReactModuleInfo> = java.util.HashMap()
-
-            val methods = listOf(
-                "isRooted",
-                "isRootedWithDetails",
-                "hasFrida",
-                "hasXposed",
-                "hasMagisk",
-                "isDebuggable",
-                "isEmulator",
-                "getSecurityStatus",
-                "isDeviceSecure",
-                "blockOnSecurityThreat"
-            )
-
-            val constants = listOf("NAME", "NATIVE_LIBRARY_LOADED")
-
-            moduleInfo["DeviceSecurity"] = ReactModuleInfo(
-                "DeviceSecurity",
-                "DeviceSecurity",
-                false,  // isTurboModule
-                false,  // isCxxModule
-                true,   // canOverrideExistingModule
-                methods,
-                constants,
-                false,  // supportsEventEmitter
-                false,  // needsDispatchEvent
-                true    // hasConstants
-            )
-
-            moduleInfo
-        }
-    }
 }
