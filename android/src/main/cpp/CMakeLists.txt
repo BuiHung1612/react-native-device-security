@@ -35,6 +35,7 @@ target_compile_options(device-security PRIVATE
 target_link_options(device-security PRIVATE
     -Wl,--gc-sections
     -Wl,-s
+    -Wl,-z,max-page-size=16384
 )
 
 # Strip symbols in release
