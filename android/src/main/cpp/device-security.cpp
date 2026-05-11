@@ -7,10 +7,7 @@
 #include <unistd.h>
 #include <android/log.h>
 #include <stdexcept>
-#include <openssl/opensslv.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
+
 
 #define LOG_TAG "DeviceSecurityNative"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
