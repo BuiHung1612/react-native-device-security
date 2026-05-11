@@ -242,33 +242,6 @@ static bool checkFridaInMaps() {
  * Check for SSL validation bypass in system properties
  */
 static bool checkSSLValidationBypass() {
-    const std::vector<std::string> propFiles = {
-        "/system/build.prop",
-        "/vendor/build.prop",
-        "/default.prop"
-    };
-
-    for (const auto& propFile : propFiles) {
-        if (!fileExists(propFile)) continue;
-
-        std::ifstream file(propFile);
-        std::string line;
-
-        while (std::getline(file, line)) {
-            // Check for SSL validation bypass indicators
-            if (line.find("ssl.untrusted=0") != std::string::npos) {
-                LOGD("Found SSL validation bypass in %s", propFile.c_str());
-                return true;
-            }
-            if (line.find("ro.debuggable") != std::string::npos &&
-                line.find("1") != std::string::npos) {
-                // Debuggable builds may have SSL validation bypassed
-                LOGD("Device is debuggable, SSL may be bypassed");
-                return true;
-            }
-        }
-    }
-
     return false;
 }
 
@@ -325,27 +298,6 @@ static bool checkSSLPinningBypass() {
  * Check for proxy configuration that could intercept SSL traffic
  */
 static bool checkProxyConfiguration() {
-    // Check for HTTP proxy in system properties
-    const std::vector<std::string> propFiles = {
-        "/system/build.prop",
-        "/vendor/build.prop"
-    };
-
-    for (const auto& propFile : propFiles) {
-        if (!fileExists(propFile)) continue;
-
-        std::ifstream file(propFile);
-        std::string line;
-
-        while (std::getline(file, line)) {
-            if (line.find("http.proxy") != std::string::npos ||
-                line.find("https.proxy") != std::string::npos) {
-                LOGD("Found proxy configuration in %s", propFile.c_str());
-                return true;
-            }
-        }
-    }
-
     // Check for proxy environment variables
     if (getenv("http_proxy") != nullptr || getenv("https_proxy") != nullptr) {
         LOGD("Found proxy environment variables");
@@ -364,11 +316,12 @@ static bool checkModifiedSSLLibraries() {
     std::string line;
 
     const std::vector<std::string> trustedPaths = {
-        "/system/lib/libssl",
-        "/system/lib64/libssl",
-        "/apex/com.android.conscrypt/lib",
-        "/data/app/", // App's own lib path
-        "/com.android.conscrypt"
+        "/system/",
+        "/apex/",
+        "/vendor/",
+        "/data/app/",
+        "/data/data/",
+        "/data/user/"
     };
 
     while (std::getline(mapsFile, line)) {
@@ -401,8 +354,7 @@ static bool checkModifiedSSLLibraries() {
 static bool checkCertificateTampering() {
     // Check for user-installed CA certificates
     const std::vector<std::string> certPaths = {
-        "/data/misc/keychain/cacerts-added",
-        "/system/etc/security/cacerts"
+        "/data/misc/keychain/cacerts-added"
     };
 
     for (const auto& certPath : certPaths) {
@@ -421,8 +373,8 @@ static bool checkCertificateTampering() {
                 closedir(dir);
 
                 // Too many user certificates might indicate tampering
-                if (certCount > 100) {
-                    LOGD("Suspicious number of certificates: %d", certCount);
+                if (certCount > 10) {
+                    LOGD("Suspicious number of user certificates: %d", certCount);
                     return true;
                 }
             }
