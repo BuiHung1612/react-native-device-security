@@ -1,6 +1,6 @@
 {
   "name": "react-native-device-defense",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Multi-layer device security detection for React Native (root, hook, debugger, emulator detection)",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -12,7 +12,7 @@
     "lib",
     "android",
     "ios",
-    "react-native-device-security.podspec",
+    "react-native-device-defense.podspec",
     "!**/__tests__",
     "!**/__fixtures__",
     "!**/__mocks__"
