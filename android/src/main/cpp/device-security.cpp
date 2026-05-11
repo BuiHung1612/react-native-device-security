@@ -485,15 +485,9 @@ static bool performRootDetection() {
         return true;
     }
 
-    // Check system properties
-    if (checkSystemProperties()) {
-        return true;
-    }
-
-    // Check mount points
-    if (checkMountPoints()) {
-        return true;
-    }
+    // Check system properties and mount points are skipped here as they
+    // frequently cause false positives on unrooted userdebug/developer devices
+    // (e.g., when USB debugging is enabled).
 
     return false;
 }

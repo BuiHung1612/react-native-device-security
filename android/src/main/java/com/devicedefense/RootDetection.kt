@@ -28,7 +28,15 @@ class RootDetection(private val context: Context) {
      */
     fun performDetection(): RootDetectionResult {
         val rootBeer = RootBeer(context)
-        val hasRootBeerDetected = rootBeer.isRooted
+        // Only use reliable RootBeer checks to avoid false positives (like checkForDangerousProps or checkForRWPaths)
+        val hasRootBeerDetected = rootBeer.detectRootManagementApps() || 
+                                  rootBeer.detectPotentiallyDangerousApps() || 
+                                  rootBeer.checkForSuBinary() || 
+                                  rootBeer.checkForBusyBoxBinary() || 
+                                  rootBeer.detectTestKeys() || 
+                                  rootBeer.checkSuExists() || 
+                                  rootBeer.checkForRootNative() || 
+                                  rootBeer.checkForMagiskBinary()
 
         // Native detection (JNI)
         val hasNativeRootDetected = NativeSecurityCheck.isRooted()
@@ -39,7 +47,7 @@ class RootDetection(private val context: Context) {
         // Check for root management apps
         val hasRootApps = checkRootApps()
 
-        // Check system properties
+        // Check system properties (keep for details, but don't use for blocking)
         val hasSystemPropsModified = checkSystemProperties()
 
         val details = mapOf(
@@ -54,11 +62,11 @@ class RootDetection(private val context: Context) {
             "dangerous_props" to checkDangerousSystemProperties()
         )
 
+        // Exclude system properties from the final isRooted flag to avoid false positives on userdebug/developer devices
         val isRooted = hasRootBeerDetected ||
                 hasNativeRootDetected ||
                 hasDangerousBins ||
-                hasRootApps ||
-                hasSystemPropsModified
+                hasRootApps
 
         return RootDetectionResult(
             isRooted = isRooted,
